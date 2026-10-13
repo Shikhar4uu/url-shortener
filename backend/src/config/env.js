@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 // Stop the app early if a required setting is missing
-const required = ['NODE_ENV', 'PORT'];
+const required = ['NODE_ENV', 'PORT', 'DATABASE_URL', 'REDIS_URL'];
 const missing = required.filter((key) => !process.env[key]);
 
 if (missing.length > 0) {
@@ -15,11 +15,14 @@ if (Number.isNaN(port)) {
   process.exit(1);
 }
 
-// One frozen object: the only place the app reads settings from
 const env = Object.freeze({
   nodeEnv: process.env.NODE_ENV,
   port,
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  databaseUrl: process.env.DATABASE_URL,
+  redisUrl: process.env.REDIS_URL,
 });
 
 module.exports = env;
+
+
