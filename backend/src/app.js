@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const env = require('./config/env');
 const routes = require('./routes');
 const redis = require('./config/redis');
+const db = require('./config/db');
 
 const app = express();
 
@@ -19,12 +20,22 @@ app.get('/health', (req, res) => {
 
 // Readiness check: can we serve traffic right now? (DB check is added in A3)
 app.get('/ready', async (req, res) => {
-  try {
-    await redis.ping();
-    res.status(200).json({ status: 'ready', redis: 'up' });
-  } catch {
-    res.status(503).json({ status: 'not ready', redis: 'down' });
-  }
+  const [databaseResult, redisResult] = await Promise.allSettled([
+    db.$queryRaw`SELECT 1`,
+    redis.ping(),
+  ]);
+
+  const databaseUp = databaseResult.status === 'fulfilled';
+
+  const redisUp = redisResult.status === 'fulfilled' && redisResult.value === 'PONG';
+
+  const ready = databaseUp && redisUp;
+
+  res.status(ready ? 200 : 503).json({
+    status: ready ? 'ready' : 'not ready',
+    database: databaseUp ? 'up' : 'down',
+    redis: redisUp ? 'up' : 'down',
+  });
 });
 
 // All API routes live under /api/v1

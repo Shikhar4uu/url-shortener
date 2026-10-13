@@ -24,5 +24,3 @@ const env = Object.freeze({
 });
 
 module.exports = env;
-
-
